@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego 1v1 con Pistolas</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #e0e0e0;
+        }
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
+        .player, .bot {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: red;
+            border-radius: 50%;
+        }
+        .bullet {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: yellow;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="player" id="player"></div>
+    <div class="bot" id="bot"></div>
+</div>
+
+<script>
+    // Variables de juego
+    const player = document.getElementById('player');
+    const bot = document.getElementById('bot');
+    const gameContainer = document.querySelector('.game-container');
+    const bulletSpeed = 5;
+    let playerX = 50, playerY = window.innerHeight / 2 - 25;
+    let botX = window.innerWidth - 100, botY = window.innerHeight / 2 - 25;
+    let playerBullets = [];
+    let botBullets = [];
+
+    // Posicionar jugador y bot
+    player.style.left = `${playerX}px`;
+    player.style.top = `${playerY}px`;
+    bot.style.left = `${botX}px`;
+    bot.style.top = `${botY}px`;
+
+    // Movimiento del jugador
+    window.addEventListener('keydown', (e) => {
+        const key = e.key;
+        if (key === 'ArrowUp') playerY -= 10;
+        if (key === 'ArrowDown') playerY += 10;
+        if (key === 'ArrowLeft') playerX -= 10;
+        if (key === 'ArrowRight') playerX += 10;
+
+        player.style.left = `${playerX}px`;
+        player.style.top = `${playerY}px`;
+    });
+
+    // Disparo del jugador
+    window.addEventListener('keydown', (e) => {
+        if (e.key === ' ') { // Barra espaciadora para disparar
+            shootPlayerBullet();
+        }
+    });
+
+    function shootPlayerBullet() {
+        const bullet = document.createElement('div');
+        bullet.classList.add('bullet');
+        bullet.style.left = `${playerX + 50}px`;
+        bullet.style.top = `${playerY + 20}px`;
+        gameContainer.appendChild(bullet);
+        playerBullets.push(bullet);
+    }
+
+    // Movimiento del bot
+    function moveBot() {
+        const randomDirection = Math.random();
+        if (randomDirection < 0.25) botY -= 2;
+        else if (randomDirection < 0.5) botY += 2;
+        else if (randomDirection < 0.75) botX -= 2;
+        else botX += 2;
+
+        bot.style.left = `${botX}px`;
+        bot.style.top = `${botY}px`;
+
+        if (Math.random() < 0.02) { // Probabilidad de disparar
+            shootBotBullet();
+        }
+    }
+
+    // Disparo del bot
+    function shootBotBullet() {
+        const bullet = document.createElement('div');
+        bullet.classList.add('bullet');
+        bullet.style.left = `${botX}px`;
+        bullet.style.top = `${botY + 20}px`;
+        gameContainer.appendChild(bullet);
+        botBullets.push(bullet);
+    }
+
+    // Actualizar los disparos y detectar colisiones
+    function updateBullets() {
+        // Mover los disparos del jugador
+        playerBullets.forEach((bullet, index) => {
+            let bulletX = parseInt(bullet.style.left);
+            bulletX += bulletSpeed;
+            bullet.style.left = `${bulletX}px`;
+
+            // Detectar colisiones con el bot
+            if (bulletX > botX && bulletX < botX + 50 && parseInt(bullet.style.top) > botY && parseInt(bullet.style.top) < botY + 50) {
+                alert("¡Ganaste! El bot fue alcanzado.");
+                resetGame();
+            }
+
+            // Eliminar balas fuera de la pantalla
+            if (bulletX > window.innerWidth) {
+                bullet.remove();
+                playerBullets.splice(index, 1);
+            }
+        });
+
+        // Mover los disparos del bot
+        botBullets.forEach((bullet, index) => {
+            let bulletX = parseInt(bullet.style.left);
+            bulletX -= bulletSpeed;
+            bullet.style.left = `${bulletX}px`;
+
+            // Detectar colisiones con el jugador
+            if (bulletX > playerX && bulletX < playerX + 50 && parseInt(bullet.style.top) > playerY && parseInt(bullet.style.top) < playerY + 50) {
+                alert("¡Perdiste! Te alcanzó el bot.");
+                resetGame();
+            }
+
+            // Eliminar balas fuera de la pantalla
+            if (bulletX < 0) {
+                bullet.remove();
+                botBullets.splice(index, 1);
+            }
+        });
+    }
+
+    // Reiniciar el juego
+    function resetGame() {
+        playerX = 50;
+        playerY = window.innerHeight / 2 - 25;
+        botX = window.innerWidth - 100;
+        botY = window.innerHeight / 2 - 25;
+        player.style.left = `${playerX}px`;
+        player.style.top = `${playerY}px`;
+        bot.style.left = `${botX}px`;
+        bot.style.top = `${botY}px`;
+        playerBullets.forEach(bullet => bullet.remove());
+        botBullets.forEach(bullet => bullet.remove());
+        playerBullets = [];
+        botBullets = [];
+    }
+
+    // Bucle de juego
+    function gameLoop() {
+        moveBot();
+        updateBullets();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Iniciar el juego
+    gameLoop();
+</script>
+
+</body>
+</html>
